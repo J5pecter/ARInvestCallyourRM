@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR Invest - Deep Interactive RM Flow</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #F97316;
+        --primary-light: #FFF3E8;
+        --primary-hover: #EA580C;
+        --bg-main: #F4F5F7;
+        --surface: #FFFFFF;
+        --text-dark: #111827;
+        --text-mut: #6B7280;
+        --text-light: #9CA3AF;
+        --danger: #EF4444;
+        --success: #22C55E;
+        --border: #E5E7EB;
+        --font: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #E5E7EB; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: var(--font); padding: 20px; }
+
+    /* Mobile Device Container */
+    .device {
+        width: 375px;
+        height: 812px;
+        background: var(--bg-main);
+        border-radius: 40px;
+        border: 10px solid #1F2937;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* --- TOAST NOTIFICATION --- */
+    .toast { position: absolute; top: 40px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #1F2937; color: white; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; z-index: 100; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* --- SCREEN 1: HOME --- */
+    .screen-home { height: 100%; display: flex; flex-direction: column; position: relative; }
+    .header { background: var(--primary); padding: 50px 20px 20px; border-radius: 0 0 24px 24px; display: flex; justify-content: space-between; align-items: center; color: white; }
+    .header-info p { font-size: 13px; opacity: 0.9; }
+    .header-info h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; margin-top: 2px; }
+    .header-icons { display: flex; gap: 16px; align-items: center; }
+    .header-icons i { font-size: 24px; }
+    .content-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+    .content-scroll::-webkit-scrollbar { display: none; }
+
+    /* Cards & Assets */
+    .card { background: var(--surface); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .card-label { font-size: 13px; color: var(--text-mut); font-weight: 500; }
+    .portfolio-val-row { display: flex; align-items: baseline; gap: 10px; margin: 8px 0; }
+    .port-val { font-size: 28px; font-weight: 700; color: var(--text-dark); letter-spacing: -1px; }
+    .port-change { font-size: 14px; font-weight: 600; color: var(--danger); background: #FEF2F2; padding: 4px 8px; border-radius: 8px; }
+    .port-invested { font-size: 13px; color: var(--text-mut); margin-bottom: 16px; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); font-weight: 600; font-size: 14px; padding: 10px 20px; border-radius: 12px; width: 100%; cursor: pointer; }
+    
+    .section-title { font-size: 18px; font-weight: 600; color: var(--text-dark); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .view-all { font-size: 13px; color: var(--primary); font-weight: 500; cursor: pointer; }
+    
+    .fund-item { background: var(--surface); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .fund-header { display: flex; gap: 12px; margin-bottom: 12px; }
+    .fund-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .fund-name { font-size: 14px; font-weight: 600; color: var(--text-dark); line-height: 1.4; }
+    .fund-tag { display: inline-block; background: #ECFDF5; color: var(--success); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; margin-top: 6px; }
+    .fund-stats { display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 12px; align-items: center; }
+    .stat-col p { font-size: 11px; color: var(--text-mut); margin-bottom: 4px; }
+    .stat-col h4 { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+    .btn-invest-sm { background: var(--primary-light); color: var(--primary); border: none; font-weight: 600; font-size: 12px; padding: 8px 16px; border-radius: 10px; cursor: pointer; }
+
+    /* Bottom Nav */
+    .bottom-nav { position: absolute; bottom: 0; width: 100%; background: var(--surface); padding: 16px 20px 24px; display: flex; justify-content: space-between; border-top: 1px solid var(--border); z-index: 10; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-light); font-size: 11px; font-weight: 500; cursor: pointer; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item i { font-size: 24px; }
+
+    /* Floating Widget */
+    .floating-widget { position: absolute; bottom: 100px; right: 20px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; cursor: pointer; }
+    .widget-bubble { background: var(--surface); color: var(--text-dark); font-size: 12px; font-weight: 500; padding: 10px 14px; border-radius: 16px 16px 4px 16px; border: 1px solid var(--border); max-width: 140px; text-align: right; line-height: 1.4; transform-origin: bottom right; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .widget-bubble span { color: var(--primary); font-weight: 600; }
+    .widget-avatar-container { position: relative; }
+    .widget-pulse { position: absolute; inset: -6px; background: var(--primary); border-radius: 50%; opacity: 0.2; animation: pulseAnim 2s infinite; }
+    .widget-avatar { width: 56px; height: 56px; background: var(--primary-light); border: 2.5px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .widget-avatar i { font-size: 32px; color: var(--primary); }
+
+    @keyframes pulseAnim { 0% { transform: scale(0.95); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 0.1; } 100% { transform: scale(0.95); opacity: 0.3; } }
+    @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+    /* --- OVERLAY & BOTTOM SHEETS --- */
+    .overlay { position: absolute; inset: 0; background: rgba(17, 24, 39, 0.6); z-index: 30; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .overlay.active { opacity: 1; pointer-events: auto; }
+    .bottom-sheet { position: absolute; bottom: 0; width: 100%; background: var(--surface); border-radius: 32px 32px 0 0; z-index: 40; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); display: flex; flex-direction: column; padding-bottom: 20px; }
+    .bottom-sheet.active { transform: translateY(0); }
+    .sheet-handle-wrap { width: 100%; display: flex; justify-content: center; padding: 16px 0 8px; cursor: pointer; }
+    .sheet-handle { width: 40px; height: 5px; background: #D1D5DB; border-radius: 10px; }
+    .sheet-content { padding: 0 24px 10px; }
+    
+    /* RM Profile Data */
+    .rm-profile-header { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+    .rm-sheet-avatar { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--primary); background: var(--primary-light); display: flex; justify-content: center; align-items: center; position: relative; }
+    .rm-sheet-avatar i { font-size: 36px; color: var(--primary); }
+    .online-indicator { width: 14px; height: 14px; background: var(--success); border: 2.5px solid var(--surface); border-radius: 50%; position: absolute; bottom: 2px; right: 2px; }
+    .rm-info h2 { font-size: 20px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+    .rm-info p { font-size: 13px; color: var(--text-mut); }
+    .trust-badge { display: inline-flex; align-items: center; gap: 4px; background: #F3F4F6; color: var(--text-dark); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; margin-top: 8px; }
+    
+    .context-nudge { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px; border-radius: 0 12px 12px 0; margin-bottom: 24px; }
+    .context-nudge p { font-size: 13px; color: #9A3412; line-height: 1.5; font-weight: 500; }
+    
+    /* Buttons */
+    .btn-primary-large { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 16px; font-size: 15px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 12px; transition: 0.2s; }
+    .btn-primary-large:active { transform: scale(0.98); background: var(--primary-hover); }
+    .secondary-actions { display: flex; gap: 12px; }
+    .btn-sec { flex: 1; background: var(--surface); border: 1.5px solid var(--border); color: var(--text-dark); font-weight: 600; font-size: 13px; padding: 12px; border-radius: 14px; display: flex; justify-content: center; align-items: center; gap: 6px; cursor: pointer; }
+    .btn-sec i.whatsapp { color: #25D366; }
+
+    /* --- SCHEDULE UI --- */
+    .schedule-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .schedule-header h3 { font-size: 18px; font-weight: 600; color: var(--text-dark); }
+    .close-btn { width: 32px; height: 32px; border-radius: 50%; background: #F3F4F6; display: flex; justify-content: center; align-items: center; color: var(--text-mut); cursor: pointer; font-size: 18px; }
+    .date-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
+    .date-row::-webkit-scrollbar { display: none; }
+    .date-pill { border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; text-align: center; cursor: pointer; min-width: 60px; }
+    .date-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .date-pill span { display: block; font-size: 11px; margin-bottom: 2px; }
+    .date-pill strong { font-size: 16px; font-weight: 600; }
+    .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    .time-pill { border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; font-size: 13px; font-weight: 500; color: var(--text-dark); cursor: pointer; }
+    .time-pill.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+    /* --- ACTIVE CALL --- */
+    .screen-call { position: absolute; inset: 0; background: linear-gradient(180deg, var(--primary) 0%, #C2410C 100%); z-index: 50; display: flex; flex-direction: column; align-items: center; padding: 60px 20px 40px; color: white; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+    .screen-call.active { opacity: 1; pointer-events: auto; }
+    .call-header { text-align: center; margin-bottom: 60px; }
+    .call-header h3 { font-size: 16px; font-weight: 500; opacity: 0.9; margin-bottom: 8px; }
+    .call-header h1 { font-size: 32px; font-weight: 600; letter-spacing: -1px; }
+    .call-avatar-wrapper { position: relative; margin-bottom: auto; }
+    .call-ripple { position: absolute; inset: -40px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; animation: callRipple 2s infinite ease-out; }
+    .call-ripple:nth-child(2) { animation-delay: 0.5s; inset: -80px; border-color: rgba(255,255,255,0.2); }
+    .call-avatar { width: 140px; height: 140px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+    .call-avatar i { font-size: 80px; color: var(--primary); }
+    .call-controls { width: 100%; display: flex; justify-content: space-around; margin-bottom: 40px; padding: 0 20px; }
+    .ctrl-btn { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; }
+    .btn-end-call { width: 72px; height: 72px; background: #EF4444; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; cursor: pointer; transition: transform 0.2s; }
+    @keyframes callRipple { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+
+    /* --- POST CALL EXIT PAGE --- */
+    .screen-post-call { position: absolute; inset: 0; background: var(--bg-main); z-index: 60; display: flex; flex-direction: column; padding: 50px 20px 30px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .screen-post-call.active { opacity: 1; pointer-events: auto; }
+    .pc-header { text-align: center; margin-bottom: 30px; }
+    .pc-icon { width: 60px; height: 60px; background: #ECFDF5; color: var(--success); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; margin: 0 auto 16px; }
+    .pc-header h2 { font-size: 22px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; }
+    .pc-header p { font-size: 14px; color: var(--text-mut); }
+    
+    .pc-summary-card { background: var(--surface); border-radius: 16px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
+    .pc-summary-card h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-mut); margin-bottom: 12px; }
+    .pc-note { display: flex; gap: 12px; margin-bottom: 16px; }
+    .pc-note i { color: var(--primary); font-size: 20px; flex-shrink: 0; }
+    .pc-note p { font-size: 14px; color: var(--text-dark); line-height: 1.5; font-weight: 500; }
+    
+    .pc-action-card { border: 1px solid var(--primary-light); background: var(--primary-light); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .pc-action-card div h5 { font-size: 14px; color: var(--text-dark); margin-bottom: 4px; }
+    .pc-action-card div p { font-size: 12px; color: var(--primary); font-weight: 500; }
+    .pc-action-card i { color: var(--primary); font-size: 20px; }
+
+    .rating-box { text-align: center; margin-top: auto; padding-bottom: 20px; }
+    .rating-box p { font-size: 13px; color: var(--text-mut); margin-bottom: 12px; }
+    .stars { display: flex; justify-content: center; gap: 10px; color: #D1D5DB; font-size: 28px; cursor: pointer; }
+    .stars i:hover { color: #FBBF24; }
+    
+    .btn-done { background: var(--surface); color: var(--text-dark); border: 1px solid var(--border); width: 100%; padding: 16px; border-radius: 16px; font-size: 15px; font-weight: 600; margin-top: 20px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="device">
+    
+    <div class="toast" id="toastMsg">
+        <i class="ti ti-check"></i> <span id="toastText">Action successful</span>
+    </div>
+
+    <div class="screen-home" id="homeScreen">
+        <div class="header">
+            <div class="header-info">
+                <p>Good Morning</p>
+                <h1>Lavina,</h1>
+            </div>
+            <div class="header-icons">
+                <i class="ti ti-bell"></i>
+                <div style="background:rgba(255,255,255,0.2); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                    <i class="ti ti-user" style="font-size: 18px;"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-scroll">
+            <div class="card">
+                <p class="card-label">Current Portfolio Value</p>
+                <div class="portfolio-val-row">
+                    <span class="port-val">₹ 74,034</span>
+                    <span class="port-change"><i class="ti ti-trending-down"></i> -3.22%</span>
+                </div>
+                <p class="port-invested">Invested Amount: ₹ 76,497</p>
+                <button class="btn-outline">View Analytics</button>
+            </div>
+
+            <div class="section-title">
+                <span>Top Trending Funds</span>
+                <span class="view-all">View All <i class="ti ti-chevron-right"></i></span>
+            </div>
+
+            <div class="fund-item">
+                <div class="fund-header">
+                    <div class="fund-icon"><i class="ti ti-building-skyscraper"></i></div>
+                    <div>
+                        <div class="fund-name">LIC MF Infrastructure Fund</div>
+                        <div class="fund-tag">3Y Return: +29.39%</div>
+                    </div>
+                </div>
+                <div class="fund-stats">
+                    <div class="stat-col"><p>Min Invest</p><h4>₹ 5,000</h4></div>
+                    <div class="stat-col"><p>Current NAV</p><h4>₹ 53.37</h4></div>
+                    <button class="btn-invest-sm">Invest</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="floating-widget" onclick="openRMProfile()">
+            <div class="widget-bubble" id="rmBubble">
+                Your portfolio dipped <span>3.22%</span>. Need expert guidance?
+            </div>
+            <div class="widget-avatar-container">
+                <div class="widget-pulse"></div>
+                <div class="widget-avatar"><i class="ti ti-headset"></i></div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active"><i class="ti ti-home"></i>Home</div>
+            <div class="nav-item"><i class="ti ti-chart-pie"></i>Invest</div>
+            <div class="nav-item"><i class="ti ti-briefcase"></i>Portfolio</div>
+            <div class="nav-item"><i class="ti ti-user-circle"></i>Profile</div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+    <div class="bottom-sheet" id="rmProfileSheet">
+        <div class="sheet-handle-wrap" onclick="closeAllSheets()"><div class="sheet-handle"></div></div>
+        <div class="sheet-content">
+            <div class="rm-profile-header">
+                <div class="rm-sheet-avatar">
+                    <i class="ti ti-user-circle"></i><div class="online-indicator"></div>
+                </div>
+                <div class="rm-info">
+                    <h2>Priya Mehta</h2>
+                    <p>Wealth Advisor · Anand Rathi</p>
+                    <div class="trust-badge"><i class="ti ti-shield-check-filled"></i> SEBI Reg: ARN 48921</div>
+                </div>
+            </div>
+            <div class="context-nudge">
+                <p>"Hi Lavina! I see your portfolio is slightly down today. Let's review your fund mix or rebalance."</p>
+            </div>
+            <button class="btn-primary-large" onclick="startCall()">
+                <i class="ti ti-phone-filled" style="font-size: 20px;"></i> Call Priya Now
+            </button>
+            <div class="secondary-actions">
+                <button class="btn-sec" onclick="openWhatsApp()">
+                    <i class="ti ti-brand-whatsapp whatsapp" style="font-size: 18px;"></i> WhatsApp
+                </button>
+                <button class="btn-sec" onclick="openScheduleSheet()">
+                    <i class="ti ti-calendar-event" style="font-size: 18px;"></i> Schedule
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-sheet" id="scheduleSheet">
+        <div class="sheet-handle-wrap" onclick="closeAllSheets()"><div class="sheet-handle"></div></div>
+        <div class="sheet-content">
+            <div class="schedule-header">
+                <h3>Schedule a Call</h3>
+                <div class="close-btn" onclick="openRMProfile()"><i class="ti ti-arrow-left"></i></div>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-mut); margin-bottom: 12px;">Select a date</p>
+            <div class="date-row">
+                <div class="date-pill active" onclick="selectDate(this)"><span>Today</span><strong>11 May</strong></div>
+                <div class="date-pill" onclick="selectDate(this)"><span>Tue</span><strong>12 May</strong></div>
+                <div class="date-pill" onclick="selectDate(this)"><span>Wed</span><strong>13 May</strong></div>
+                <div class="date-pill" onclick="selectDate(this)"><span>Thu</span><strong>14 May</strong></div>
+            </div>
+
+            <p style="font-size: 13px; color: var(--text-mut); margin-bottom: 12px;">Select a time slot</p>
+            <div class="time-grid">
+                <div class="time-pill active" onclick="selectTime(this)">10:00 AM</div>
+                <div class="time-pill" onclick="selectTime(this)">11:30 AM</div>
+                <div class="time-pill" onclick="selectTime(this)">02:00 PM</div>
+                <div class="time-pill" onclick="selectTime(this)">04:30 PM</div>
+            </div>
+
+            <button class="btn-primary-large" onclick="confirmSchedule()">Confirm Booking</button>
+        </div>
+    </div>
+
+    <div class="screen-call" id="callScreen">
+        <div class="call-header">
+            <h3>Connecting via AR Secure Line...</h3>
+            <h1>Priya Mehta</h1>
+            <p style="opacity: 0.8; margin-top: 6px; font-size: 14px;">Wealth Advisor</p>
+        </div>
+        <div class="call-avatar-wrapper">
+            <div class="call-ripple"></div><div class="call-ripple"></div>
+            <div class="call-avatar"><i class="ti ti-user-circle"></i></div>
+        </div>
+        <div class="call-controls">
+            <div class="ctrl-btn"><i class="ti ti-microphone"></i></div>
+            <div class="ctrl-btn"><i class="ti ti-volume"></i></div>
+            <div class="ctrl-btn"><i class="ti ti-dialpad"></i></div>
+        </div>
+        <div class="btn-end-call" onclick="endCall()"><i class="ti ti-phone-off"></i></div>
+    </div>
+
+    <div class="screen-post-call" id="postCallScreen">
+        <div class="pc-header">
+            <div class="pc-icon"><i class="ti ti-phone-check"></i></div>
+            <h2>Call Ended</h2>
+            <p>Duration: 04:12</p>
+        </div>
+
+        <div class="pc-summary-card">
+            <h4>Discussion Summary</h4>
+            <div class="pc-note">
+                <i class="ti ti-bulb"></i>
+                <p>Priya recommended diversifying your IT sector exposure by starting an SIP in an Index Fund.</p>
+            </div>
+            
+            <div class="pc-action-card" onclick="showToast('Redirecting to Invest flow...')">
+                <div>
+                    <h5>Start SIP in Nifty 50 Index</h5>
+                    <p>Recommended Action</p>
+                </div>
+                <i class="ti ti-arrow-right"></i>
+            </div>
+        </div>
+
+        <div class="rating-box">
+            <p>How was your conversation with Priya?</p>
+            <div class="stars">
+                <i class="ti ti-star" onclick="rate(this)"></i>
+                <i class="ti ti-star" onclick="rate(this)"></i>
+                <i class="ti ti-star" onclick="rate(this)"></i>
+                <i class="ti ti-star" onclick="rate(this)"></i>
+                <i class="ti ti-star" onclick="rate(this)"></i>
+            </div>
+        </div>
+
+        <button class="btn-done" onclick="returnToHome()">Return to Dashboard</button>
+    </div>
+
+</div>
+
+<script>
+    // Elements
+    const overlay = document.getElementById('overlay');
+    const rmProfileSheet = document.getElementById('rmProfileSheet');
+    const scheduleSheet = document.getElementById('scheduleSheet');
+    const callScreen = document.getElementById('callScreen');
+    const postCallScreen = document.getElementById('postCallScreen');
+    const rmBubble = document.getElementById('rmBubble');
+    const toastMsg = document.getElementById('toastMsg');
+    const toastText = document.getElementById('toastText');
+
+    // Toast Logic
+    function showToast(msg) {
+        toastText.innerText = msg;
+        toastMsg.classList.add('show');
+        setTimeout(() => { toastMsg.classList.remove('show'); }, 3000);
+    }
+
+    // Routing Logic
+    function closeAllSheets() {
+        overlay.classList.remove('active');
+        rmProfileSheet.classList.remove('active');
+        scheduleSheet.classList.remove('active');
+        setTimeout(() => { rmBubble.style.display = 'block'; }, 400);
+    }
+
+    function openRMProfile() {
+        scheduleSheet.classList.remove('active');
+        overlay.classList.add('active');
+        rmProfileSheet.classList.add('active');
+        rmBubble.style.display = 'none';
+    }
+
+    // WhatsApp
+    function openWhatsApp() {
+        closeAllSheets();
+        showToast("Opening WhatsApp Chat...");
+    }
+
+    // Schedule logic
+    function openScheduleSheet() {
+        rmProfileSheet.classList.remove('active');
+        scheduleSheet.classList.add('active');
+    }
+
+    function selectDate(element) {
+        document.querySelectorAll('.date-pill').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    function selectTime(element) {
+        document.querySelectorAll('.time-pill').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    function confirmSchedule() {
+        closeAllSheets();
+        showToast("Call Scheduled Successfully!");
+    }
+
+    // Call Flow
+    function startCall() {
+        closeAllSheets();
+        callScreen.classList.add('active');
+    }
+
+    function endCall() {
+        callScreen.classList.remove('active');
+        postCallScreen.classList.add('active'); // Go to Post Call summary
+    }
+
+    // Post Call Logic
+    function rate(star) {
+        // Simple UI rating fill
+        const stars = star.parentElement.children;
+        let fill = true;
+        for (let s of stars) {
+            s.style.color = fill ? '#FBBF24' : '#D1D5DB';
+            if (s === star) fill = false;
+        }
+        setTimeout(() => showToast("Thanks for your feedback!"), 500);
+    }
+
+    function returnToHome() {
+        postCallScreen.classList.remove('active');
+        setTimeout(() => { rmBubble.style.display = 'block'; }, 500);
+    }
+
+    // Auto-hide bubble
+    setTimeout(() => {
+        rmBubble.style.opacity = '0';
+        setTimeout(() => { rmBubble.style.display = 'none'; }, 300);
+    }, 8000);
+</script>
+</body>
+</html>
